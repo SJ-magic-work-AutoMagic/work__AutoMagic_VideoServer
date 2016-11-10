@@ -1,0 +1,5 @@
+<ServerId>	0
+
+<VJ_IP>		127.0.0.1
+<VJ_port>	12351
+<This_port>	12352
