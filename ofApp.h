@@ -161,6 +161,9 @@ private:
 	
 	/********************
 	********************/
+	char path_mov0[BUF_SIZE];
+	char path_mov12[BUF_SIZE];
+	
 	vector<TABLE_MOV_INFO> Table_mov0;
 	vector<TABLE_MOV_INFO> Table_mov12;
 	

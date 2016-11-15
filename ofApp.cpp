@@ -80,8 +80,25 @@ void ofApp::ReadConfig()
 		}else if(strcmp(buf, "<ServerId>") == 0){
 			fscanf(fp, "%s", buf);
 			ServerId = atoi(buf);
+			
+		}else if(strcmp(buf, "<mov_0>") == 0){
+			/********************
+			スキャン集合
+				http://wisdom.sakura.ne.jp/programming/c/c58.html
+			********************/
+			fscanf(fp, "%[ \t]", buf); // space & tab 読み捨て
+			fscanf(fp, "%[^\n]", buf); // \n以外を読み取る -> \nが来るまで読み込み(space also)
+			sprintf(path_mov0, "%s", buf);
+			
+		}else if(strcmp(buf, "<mov_12>") == 0){
+			/********************
+			スキャン集合
+				http://wisdom.sakura.ne.jp/programming/c/c58.html
+			********************/
+			fscanf(fp, "%[ \t]", buf); // space & tab 読み捨て
+			fscanf(fp, "%[^\n]", buf); // \n以外を読み取る -> \nが来るまで読み込み(space also)
+			sprintf(path_mov12, "%s", buf);
 		}
-
 	}
 	
 	fclose(fp);
@@ -90,6 +107,8 @@ void ofApp::ReadConfig()
 	********************/
 	printMessage("config data");
 	printf("server id = %d,  OscIP_SendTo = %s, OscPort_SendTo = %d, OscPort_Receive = %d\n", ServerId, OscIP_SendTo, OscPort_SendTo, OscPost_Receive);
+	printf("path_mov0 :%s\n", path_mov0);
+	printf("path_mov12:%s\n", path_mov12);
 	
 	Osc_VJ.setup(OscIP_SendTo, OscPort_SendTo, OscPost_Receive);
 }
@@ -130,8 +149,17 @@ void ofApp::setup(){
 	
 	/********************
 	********************/
+	/*
 	makeup_mov_table("../../../data/mov_0", Table_mov0);
 	makeup_mov_table("../../../data/mov_12", Table_mov12);
+	
+	// makeup_mov_table("/Users/nobuhiro/Documents/source/openframeworks/data/vj\ material/vj\ Hap\(1280x720\)/mov_0", Table_mov0);
+	// makeup_mov_table("/Users/nobuhiro/Documents/source/openframeworks/data/vj\ material/vj\ Hap\(1280x720\)/mov_12", Table_mov12);
+	*/
+	
+	makeup_mov_table(path_mov0, Table_mov0);
+	makeup_mov_table(path_mov12, Table_mov12);
+
 	
 	shuffle_TableMov(Table_mov0);
 	shuffle_TableMov(Table_mov12);
@@ -354,6 +382,8 @@ void ofApp::ChangeVideoContents()
 	printf("%s\n", Table_mov12[id_mov_12].FileName.c_str());
 	video[2].load(Table_mov12[id_mov_12].FileName.c_str());
 	setup_video(video[2]);
+	
+	printf("Finish loading\n");
 	
 	/********************
 	********************/
