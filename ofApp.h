@@ -159,6 +159,8 @@ private:
 	ofFbo fbo[NUM_VIDEOS];
 	ofxHapPlayer video[NUM_VIDEOS];
 	
+	const float Video_FadeInterval_Frames;
+	
 	/********************
 	********************/
 	char path_mov0[BUF_SIZE];

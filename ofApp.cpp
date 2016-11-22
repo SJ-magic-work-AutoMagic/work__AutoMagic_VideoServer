@@ -32,6 +32,7 @@ ofApp::ofApp()
 , dispVideo_id(0)
 , b_test_ContentsChagne(false)
 , b_monitor(true)
+, Video_FadeInterval_Frames(10)
 {
 }
 
@@ -410,7 +411,17 @@ void ofApp::draw(){
 	for(int i = 0; i < NUM_VIDEOS; i++){
 		fbo[i].begin();
 		ofBackground(0);
-		ofSetColor(255, 255, 255, 255);
+		
+		float alpha = 1.0;
+		int TotalFrames = video[i].getTotalNumFrames();
+		int CurrentFrame = video[i].getCurrentFrame();
+		if(CurrentFrame < Video_FadeInterval_Frames){
+			alpha = 1.0 / Video_FadeInterval_Frames * CurrentFrame;
+		}else if(TotalFrames - Video_FadeInterval_Frames < CurrentFrame){
+			alpha = 1 - 1.0/Video_FadeInterval_Frames * (Video_FadeInterval_Frames - (TotalFrames - CurrentFrame));
+		}
+		ofSetColor(255, 255, 255, int(255 * alpha));
+		
 		video[i].draw(0, 0, fbo[i].getWidth(), fbo[i].getHeight());
 		fbo[i].end();
 		
