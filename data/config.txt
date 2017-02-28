@@ -3,5 +3,6 @@
 <VJ_IP>		127.0.0.1
 <VJ_port>	12351
 <This_port>	12352
-<mov_0> 	/Users/nobuhiro/Documents/source/openframeworks/data/vj material/vj Hap(1280x720)/mov_0
-<mov_12> 	/Users/nobuhiro/Documents/source/openframeworks/data/vj material/vj Hap(1280x720)/mov_12
+<mov_0> 	/Users/nobuhiro/Documents/source/openframeworks/data/vj material/mov_0
+<mov_1> 	/Users/nobuhiro/Documents/source/openframeworks/data/vj material/mov_1
+<mov_2> 	/Users/nobuhiro/Documents/source/openframeworks/data/vj material/mov_2
