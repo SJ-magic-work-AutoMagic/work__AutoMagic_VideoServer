@@ -88,16 +88,17 @@ void ofApp::ReadConfig()
 			********************/
 			fscanf(fp, "%[ \t]", buf); // space & tab 読み捨て
 			fscanf(fp, "%[^\n]", buf); // \n以外を読み取る -> \nが来るまで読み込み(space also)
-			sprintf(path_mov0, "%s", buf);
+			sprintf(path_mov[0], "%s", buf);
 			
-		}else if(strcmp(buf, "<mov_12>") == 0){
-			/********************
-			スキャン集合
-				http://wisdom.sakura.ne.jp/programming/c/c58.html
-			********************/
+		}else if(strcmp(buf, "<mov_1>") == 0){
 			fscanf(fp, "%[ \t]", buf); // space & tab 読み捨て
 			fscanf(fp, "%[^\n]", buf); // \n以外を読み取る -> \nが来るまで読み込み(space also)
-			sprintf(path_mov12, "%s", buf);
+			sprintf(path_mov[1], "%s", buf);
+			
+		}else if(strcmp(buf, "<mov_2>") == 0){
+			fscanf(fp, "%[ \t]", buf); // space & tab 読み捨て
+			fscanf(fp, "%[^\n]", buf); // \n以外を読み取る -> \nが来るまで読み込み(space also)
+			sprintf(path_mov[2], "%s", buf);
 		}
 	}
 	
@@ -107,8 +108,9 @@ void ofApp::ReadConfig()
 	********************/
 	printMessage("config data");
 	printf("server id = %d,  OscIP_SendTo = %s, OscPort_SendTo = %d, OscPort_Receive = %d\n", ServerId, OscIP_SendTo, OscPort_SendTo, OscPost_Receive);
-	printf("path_mov0 :%s\n", path_mov0);
-	printf("path_mov12:%s\n", path_mov12);
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		printf("path_mov%d:%s\n", i, path_mov[i]);
+	}
 	
 	Osc_VJ.setup(OscIP_SendTo, OscPort_SendTo, OscPost_Receive);
 }
@@ -157,33 +159,23 @@ void ofApp::setup(){
 	// makeup_mov_table("/Users/nobuhiro/Documents/source/openframeworks/data/vj\ material/vj\ Hap\(1280x720\)/mov_12", Table_mov12);
 	*/
 	
-	makeup_mov_table(path_mov0, Table_mov0);
-	makeup_mov_table(path_mov12, Table_mov12);
-
-	
-	shuffle_TableMov(Table_mov0);
-	shuffle_TableMov(Table_mov12);
-	
-	id_mov_0 = 0;
-	id_mov_12 = 0;
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		makeup_mov_table(path_mov[i], Table_mov[i]);
+		shuffle_TableMov(Table_mov[i]);
+		id_mov[i] = 0;
+	}
 	
 	/********************
 	********************/
-	printMessage("Load_0");
-	printf("%s\n", Table_mov0[id_mov_0].FileName.c_str());
-	video[0].load(Table_mov0[id_mov_0].FileName.c_str());
-	setup_video(video[0]);
-	
-	printMessage("Load_1");
-	printf("%s\n", Table_mov12[id_mov_12].FileName.c_str());
-	video[1].load(Table_mov12[id_mov_12].FileName.c_str());
-	setup_video(video[1]);
-	
-	id_mov_12 = getNextId_Table_mov(Table_mov12, id_mov_12);
-	printMessage("Load_2");
-	printf("%s\n", Table_mov12[id_mov_12].FileName.c_str());
-	video[2].load(Table_mov12[id_mov_12].FileName.c_str());
-	setup_video(video[2]);
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		char buf[BUF_SIZE];
+		sprintf(buf, "Load_%d", i);
+		printMessage(buf);
+		
+		printf("%s\n", Table_mov[i][id_mov[i]].FileName.c_str());
+		video[i].load(Table_mov[i][id_mov[i]].FileName.c_str());
+		setup_video(video[i]);
+	}
 	
 	/********************
 	********************/
@@ -368,20 +360,12 @@ void ofApp::ChangeVideoContents()
 		video[i].close();
 	}
 	
-	id_mov_0 = getNextId_Table_mov(Table_mov0, id_mov_0);
-	printf("%s\n", Table_mov0[id_mov_0].FileName.c_str());
-	video[0].load(Table_mov0[id_mov_0].FileName.c_str());
-	setup_video(video[0]);
-	
-	id_mov_12 = getNextId_Table_mov(Table_mov12, id_mov_12);
-	printf("%s\n", Table_mov12[id_mov_12].FileName.c_str());
-	video[1].load(Table_mov12[id_mov_12].FileName.c_str());
-	setup_video(video[1]);
-
-	id_mov_12 = getNextId_Table_mov(Table_mov12, id_mov_12);
-	printf("%s\n", Table_mov12[id_mov_12].FileName.c_str());
-	video[2].load(Table_mov12[id_mov_12].FileName.c_str());
-	setup_video(video[2]);
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		id_mov[i] = getNextId_Table_mov(Table_mov[i], id_mov[i]);
+		printf("%s\n", Table_mov[i][id_mov[i]].FileName.c_str());
+		video[i].load(Table_mov[i][id_mov[i]].FileName.c_str());
+		setup_video(video[i]);
+	}
 	
 	printf("Finish loading\n");
 	
@@ -409,19 +393,19 @@ void ofApp::draw(){
 	********************/
 	for(int i = 0; i < NUM_VIDEOS; i++){
 		fbo[i].begin();
-		ofBackground(0);
-		
-		float alpha = 1.0;
-		int TotalFrames = video[i].getTotalNumFrames();
-		int CurrentFrame = video[i].getCurrentFrame();
-		if(CurrentFrame < Video_FadeInterval_Frames){
-			alpha = 1.0 / Video_FadeInterval_Frames * CurrentFrame;
-		}else if(TotalFrames - Video_FadeInterval_Frames < CurrentFrame){
-			alpha = 1 - 1.0/Video_FadeInterval_Frames * (Video_FadeInterval_Frames - (TotalFrames - CurrentFrame));
-		}
-		ofSetColor(255, 255, 255, int(255 * alpha));
-		
-		video[i].draw(0, 0, fbo[i].getWidth(), fbo[i].getHeight());
+			ofBackground(0);
+			
+			float alpha = 1.0;
+			int TotalFrames = video[i].getTotalNumFrames();
+			int CurrentFrame = video[i].getCurrentFrame();
+			if(CurrentFrame < Video_FadeInterval_Frames){
+				alpha = 1.0 / Video_FadeInterval_Frames * CurrentFrame;
+			}else if(TotalFrames - Video_FadeInterval_Frames < CurrentFrame){
+				alpha = 1 - 1.0/Video_FadeInterval_Frames * (Video_FadeInterval_Frames - (TotalFrames - CurrentFrame));
+			}
+			ofSetColor(255, 255, 255, int(255 * alpha));
+			
+			video[i].draw(0, 0, fbo[i].getWidth(), fbo[i].getHeight());
 		fbo[i].end();
 		
 		ofTexture tex = fbo[i].getTextureReference();

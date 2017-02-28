@@ -163,14 +163,9 @@ private:
 	
 	/********************
 	********************/
-	char path_mov0[BUF_SIZE];
-	char path_mov12[BUF_SIZE];
-	
-	vector<TABLE_MOV_INFO> Table_mov0;
-	vector<TABLE_MOV_INFO> Table_mov12;
-	
-	int id_mov_0;
-	int id_mov_12;
+	char path_mov[NUM_VIDEOS][BUF_SIZE];
+	vector<TABLE_MOV_INFO> Table_mov[NUM_VIDEOS];
+	int id_mov[NUM_VIDEOS];
 	
 	float t_LastMessage_ContentsChange;
 	
