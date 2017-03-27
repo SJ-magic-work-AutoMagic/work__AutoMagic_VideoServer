@@ -32,7 +32,9 @@ ofApp::ofApp()
 , dispVideo_id(0)
 , b_test_ContentsChagne(false)
 , b_monitor(true)
+
 , Video_FadeInterval_Frames(10)
+// , Video_FadeInterval_Frames(0)
 {
 }
 
@@ -381,15 +383,17 @@ void ofApp::ChangeVideoContents()
 void ofApp::draw(){
 	/********************
 	********************/
-	// ofBackground(0);
-	
-	/********************
-	********************/
 	// Clear with alpha, so we can capture via syphon and composite elsewhere should we want.
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	/********************
+	rise/fallにfadeを挿入した.
+	->Loop素材でなくても自然にLoopさせるため
+	
+	ただし、元movieのcodecで、Hap codec(not High Quality) とすること.
+	High Qualityだと、αが効かず、常にonとなってしまった(実験結果).
+		ffmpeg -i test.mp4 -vcodec hap -format hap   out.mov 
 	********************/
 	for(int i = 0; i < NUM_VIDEOS; i++){
 		fbo[i].begin();
@@ -414,6 +418,7 @@ void ofApp::draw(){
 	
 	/********************
 	********************/
+	ofSetColor(255, 255, 255, 255);
 	if(b_monitor) fbo[dispVideo_id].draw(0, 0, ofGetWidth(), ofGetHeight());
 }
 
