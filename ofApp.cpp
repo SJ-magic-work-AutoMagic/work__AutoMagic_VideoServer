@@ -31,10 +31,13 @@ ofApp::ofApp()
 : t_LastMessage_ContentsChange(0)
 , dispVideo_id(0)
 , b_test_ContentsChagne(false)
-, b_monitor(true)
 
 , Video_FadeInterval_Frames(10)
 // , Video_FadeInterval_Frames(0)
+
+, State(STATE_STOP)
+, k_PLAY(false)
+, k_STOP(false)
 {
 }
 
@@ -123,6 +126,8 @@ void ofApp::setup(){
 	********************/
 	srand((unsigned) time(NULL));
 	
+	font.loadFont("FTY DELIRIUM NCV.ttf", 150);
+	
 	/********************
 	********************/
 	ReadConfig();
@@ -150,6 +155,15 @@ void ofApp::setup(){
 	for(int i = 0; i < NUM_VIDEOS; i++){
 		fbo[i].allocate(VIDEO_WIDTH, VIDEO_HEIGHT);
 	}
+}
+
+/******************************
+******************************/
+void ofApp::Process_STOP_to_PLAY()
+{
+	/********************
+	********************/
+	printMessage("PLAY start");
 	
 	/********************
 	********************/
@@ -185,6 +199,42 @@ void ofApp::setup(){
 	m_send.setAddress("/Ready_CallBack");
 	m_send.addIntArg(1);
 	Osc_VJ.OscSend.sendMessage(m_send);
+	
+	t_LastMessage_ContentsChange = ofGetElapsedTimef();
+	
+	/********************
+	********************/
+	State = STATE_PLAY;
+	printf("\nFinish Process\n");
+}
+
+/******************************
+******************************/
+void ofApp::Process_PLAY_to_STOP()
+{
+	/********************
+	********************/
+	printMessage("STOP");
+
+	/********************
+	********************/
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		video[i].stop();
+		video[i].close();
+	}
+	
+	/********************
+	C++ STL vectorのメモリ解放
+		http://nonbiri-tereka.hatenablog.com/entry/2014/06/25/164019
+	********************/
+	for(int i = 0; i < NUM_VIDEOS; i++){
+		vector<TABLE_MOV_INFO>().swap(Table_mov[i]);
+	}
+	
+	/********************
+	********************/
+	State = STATE_STOP;
+	printf("Finish Process\n");
 }
 
 /******************************
@@ -303,6 +353,18 @@ void ofApp::update(){
 
 	/********************
 	********************/
+	if( (State == STATE_STOP) && (k_PLAY) ){
+		k_PLAY = false;
+		Process_STOP_to_PLAY();
+		
+	}else if( (State == STATE_PLAY) && (k_STOP) ){
+		k_STOP = false;
+		Process_PLAY_to_STOP();
+		
+	}
+	
+	/********************
+	********************/
 	while(Osc_VJ.OscReceive.hasWaitingMessages()){
 		ofxOscMessage m_receive;
 		Osc_VJ.OscReceive.getNextMessage(&m_receive);
@@ -312,9 +374,10 @@ void ofApp::update(){
 			********************/
 			m_receive.getArgAsInt32(0); /* 読み捨て*/
 			
-			ChangeVideoContents();
-			
-			t_LastMessage_ContentsChange = ElapsedTime_f;
+			if(State == STATE_PLAY){
+				ChangeVideoContents();
+				t_LastMessage_ContentsChange = ElapsedTime_f;
+			}
 			
 		}else if(m_receive.getAddress() == "/Quit"){
 			std::exit(1);
@@ -325,24 +388,27 @@ void ofApp::update(){
 	********************/
 	if(b_test_ContentsChagne){
 		b_test_ContentsChagne = false;
-		ChangeVideoContents();
-	}
-	
-	/********************
-	********************/
-	for(int i = 0; i < NUM_VIDEOS; i++){
-		video[i].update();
-	}
-	
-	/********************
-	********************/
-	if(1.0 < ElapsedTime_f - t_LastMessage_ContentsChange){
-		ofxOscMessage m_send;
-		m_send.setAddress("/Ready_CallBack");
-		m_send.addIntArg(1);
-		Osc_VJ.OscSend.sendMessage(m_send);
 		
-		t_LastMessage_ContentsChange = ElapsedTime_f;
+		if(State == STATE_PLAY) ChangeVideoContents();
+	}
+	
+	/********************
+	********************/
+	if(State == STATE_PLAY){
+		/* */
+		for(int i = 0; i < NUM_VIDEOS; i++){
+			video[i].update();
+		}
+		
+		/* */
+		if(1.0 < ElapsedTime_f - t_LastMessage_ContentsChange){
+			ofxOscMessage m_send;
+			m_send.setAddress("/Ready_CallBack");
+			m_send.addIntArg(1);
+			Osc_VJ.OscSend.sendMessage(m_send);
+			
+			t_LastMessage_ContentsChange = ElapsedTime_f;
+		}
 	}
 }
 
@@ -399,17 +465,27 @@ void ofApp::draw(){
 		fbo[i].begin();
 			ofBackground(0);
 			
-			float alpha = 1.0;
-			int TotalFrames = video[i].getTotalNumFrames();
-			int CurrentFrame = video[i].getCurrentFrame();
-			if(CurrentFrame < Video_FadeInterval_Frames){
-				alpha = 1.0 / Video_FadeInterval_Frames * CurrentFrame;
-			}else if(TotalFrames - Video_FadeInterval_Frames < CurrentFrame){
-				alpha = 1 - 1.0/Video_FadeInterval_Frames * (Video_FadeInterval_Frames - (TotalFrames - CurrentFrame));
+			if(State == STATE_PLAY){
+				float alpha = 1.0;
+				int TotalFrames = video[i].getTotalNumFrames();
+				int CurrentFrame = video[i].getCurrentFrame();
+				if(CurrentFrame < Video_FadeInterval_Frames){
+					alpha = 1.0 / Video_FadeInterval_Frames * CurrentFrame;
+				}else if(TotalFrames - Video_FadeInterval_Frames < CurrentFrame){
+					alpha = 1 - 1.0/Video_FadeInterval_Frames * (Video_FadeInterval_Frames - (TotalFrames - CurrentFrame));
+				}
+				ofSetColor(255, 255, 255, int(255 * alpha));
+				
+				video[i].draw(0, 0, fbo[i].getWidth(), fbo[i].getHeight());
+				
+			}else{
+				char DispMessage[BUF_SIZE];
+				sprintf(DispMessage, "STOP:[%d]", i);
+				
+				float offset_x = font.stringWidth(DispMessage) / 2;
+				font.drawString(DispMessage, VIDEO_WIDTH/2 - offset_x, VIDEO_HEIGHT/2);
+				
 			}
-			ofSetColor(255, 255, 255, int(255 * alpha));
-			
-			video[i].draw(0, 0, fbo[i].getWidth(), fbo[i].getHeight());
 		fbo[i].end();
 		
 		ofTexture tex = fbo[i].getTextureReference();
@@ -419,7 +495,7 @@ void ofApp::draw(){
 	/********************
 	********************/
 	ofSetColor(255, 255, 255, 255);
-	if(b_monitor) fbo[dispVideo_id].draw(0, 0, ofGetWidth(), ofGetHeight());
+	fbo[dispVideo_id].draw(0, 0, ofGetWidth(), ofGetHeight());
 }
 
 //--------------------------------------------------------------
@@ -431,12 +507,16 @@ void ofApp::keyPressed(int key){
 			dispVideo_id = key - '0';
 			break;
 			
-		case 'm':
-			b_monitor = !b_monitor;
-			break;
-			
 		case 'c':
 			b_test_ContentsChagne = true;
+			break;
+			
+		case 'p':
+			if(State == STATE_STOP) k_PLAY = true;
+			break;
+			
+		case 's':
+			if(State == STATE_PLAY) k_STOP= true;
 			break;
 	}
 }

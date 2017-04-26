@@ -1,4 +1,6 @@
 /************************************************************
+release vector
+	http://nonbiri-tereka.hatenablog.com/entry/2014/06/25/164019
 ************************************************************/
 #pragma once
 
@@ -128,6 +130,11 @@ class ofApp : public ofBaseApp{
 private:
 	/****************************************
 	****************************************/
+	enum STATE{
+		STATE_PLAY,
+		STATE_STOP,
+	};
+	
 	enum{
 		MONITOR_WIDTH = 320,
 		MONITOR_HEIGHT = 180,
@@ -152,6 +159,15 @@ private:
 	****************************************/
 	/********************
 	********************/
+	STATE State;
+	
+	bool k_PLAY;
+	bool k_STOP;
+	
+	ofTrueTypeFont font;
+	
+	/********************
+	********************/
 	OSC_TARGET Osc_VJ;
 	int ServerId;
 	
@@ -172,7 +188,6 @@ private:
 	int dispVideo_id;
 	
 	bool b_test_ContentsChagne;
-	bool b_monitor;
 	
 	
 	/****************************************
@@ -183,6 +198,9 @@ private:
 	void setup_video(ofxHapPlayer& video);
 	int getNextId_Table_mov(vector<TABLE_MOV_INFO>& Table_mov, int& id);
 	void ChangeVideoContents();
+	
+	void Process_STOP_to_PLAY();
+	void Process_PLAY_to_STOP();
 	
 public:
 	/****************************************
